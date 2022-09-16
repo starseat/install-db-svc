@@ -8,13 +8,14 @@
 <br>
 `Restful API` 형식을 사용 합니다. <br>
 포트번호는 `12000` 으로 사용됩니다. <br>
-`Kubernetes Object` 로 서비스 되면 `NodePort` 번호는 `32700` 입니다.
 
-  - `kubernetes Object` 의 `helm-chart` 는 [여기](http://git.bridgetec.co.kr/IPRON-CLOUD/Common/helm-chart/tree/master/charts/install-db-svc) 를 참조 하시기 바랍니다.
+
 
 ## Base
 
 - `http://localhost:12000` 는 예시 `HOST` 입니다.
+
+
 
 ### Request
 
@@ -23,6 +24,8 @@
 - `POST`: 데이터 등록
 - `PUT`: 데이터 수정
 - `DELETE`: 데이터 삭제
+
+
 
 ### Response
 
@@ -39,13 +42,17 @@
 }
 ```
 
+
+
 ## MongoDB
 
 MongoDB Connection 설정 및 기초 설정을 합니다.
 
+
+
 ### Connection 설정
 
-`MongoDB 접속 Connection`을 설정한다. <br>
+`MongoDB 접속 Connection`을 설정합니다. <br>
 미 설정시 기본값인 `mongodb://localhost:27017` 으로 사용 됩니다.
 
 ```
@@ -58,6 +65,8 @@ MongoDB Connection 설정 및 기초 설정을 합니다.
 }
 ```
 
+
+
 ### Connection 조회
 
 설정된 `MongoDB Connection` 정보를 조회합니다.
@@ -66,6 +75,8 @@ MongoDB Connection 설정 및 기초 설정을 합니다.
 - uri
 [GET] http://localhost:12000/db/v1/mongodb/connection
 ```
+
+
 
 ### DB 생성 및 Collection 생성
 
@@ -81,38 +92,7 @@ MongoDB 에 사용될 `DB 및 Collection을 생성` 합니다.
 }
 ```
 
-#### Collection List
 
-- gatewayRoute
-- accountGrant
-- accountPolicy
-- jobScheduler
-- account
-- flow
-- prompt
-- flowdata
-- group
-- users
-- userPasswordHistory
-- accessAuth
-- skills
-- queue
-- statusCause
-- site
-- trunks
-- phones
-- certification
-- didPlan
-- didPorts
-- ~~carrierRoute~~
-- numberPlan
-- routePoints
-- featureCodes
-- spam
-- schedule
-- bridge
-- tags
-- firmware
 
 ### 생성된 database 및 collection 조회
 
@@ -121,11 +101,11 @@ MongoDB 에 사용될 `DB 및 Collection을 생성` 합니다.
 [GET] http://localhost:12000/db/v1/mongodb/create/
 ```
 
+
+
 ### validation 추가
 
 해당 collection 에 validation 추가 (json 형태)
-
-- `<json 형태의 validation 설정 정보>` 는 [여기](http://git.bridgetec.co.kr/IPRON-CLOUD-DB/mongodb/tree/master/validation) 를 참조하시기 바랍니다.
 
 ```
 - uri
@@ -137,14 +117,128 @@ MongoDB 에 사용될 `DB 및 Collection을 생성` 합니다.
 }
 ```
 
+
+
+#### validation 설정 정보
+
+validation 예시 입니다. <br>
+자세한 사항은 [여기](https://www.mongodb.com/docs/manual/core/schema-validation/#when-mongodb-checks-validation)를 참조해 주세요.
+
+```json
+{
+  "collMod": "users",
+  "validationAction": "warn",
+  "validator": {
+    "$jsonSchema": {
+      "bsonType": "object",
+      "required": [
+        "email",
+        "name"
+      ],
+      "properties": {
+        "email": {
+          "bsonType": "string",
+          "pattern": "[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "please check email format. (kor, eng, number, _, -, .)[1-128]"
+        },
+        "name": {
+          "bsonType": "string",
+          "pattern": "^[ㄱ-ㅎ|가-힣|a-z|A-Z|0-9|_|\\-|\\.| ]+$",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "please check name format. (kor, eng, number, _, -, .)[1-128]"
+        },
+        "password": {
+          "bsonType": "string",
+          "minLength": 4,
+          "maxLength": 128,
+          "description": "please check password format. [4-128]"
+        },
+        "tags": {
+          "bsonType": "array"
+        },
+        "level": {
+          "bsonType": "string",
+          "enum": [ "superadmin", "admin", "manager", "user"]
+        },
+        "extension": {
+          "bsonType": "string",
+          "pattern": "^[0-9|\\*|\\#]+$",
+          "minLength": 2,
+          "maxLength": 12,
+          "description": "please check extension format. (number, *, #)[2-12]"
+        },
+        "skillSets": {
+          "bsonType": "array",
+          "items": {
+            "bsonType": "object",
+            "properties": {
+              "skillLv": {
+                "bsonType": "int",
+                "minimum": 0,
+                "maximum": 99,
+                "description": "please check skillLv format. [0-99]"
+              }, 
+              "skillPri": {
+                "bsonType": "int",
+                "minimum": 0,
+                "maximum": 9,
+                "description": "please check skillPri format. [0-9]"
+              }
+            }
+          }
+        },
+        "schedule": {
+          "bsonType": "object",
+          "properties": {
+            "enable": {
+              "bsonType": "bool"
+            },
+            "type": {
+              "bsonType": "string",
+              "enum": [ "user", "group"]
+            },
+            "medias": {
+              "bsonType": "array",
+              "items": {
+                "bsonType": "object",
+                "properties": {
+                  "mediaType": {
+                    "bsonType": "string",
+                    "enum": [ "voice", "video", "chat", "email"]
+                  }, 
+                  "scheduleId": {
+                    "bsonType": "objectId"
+                  },
+                  "enable": {
+                    "bsonType": "bool"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+```
+
+
+
 ### ~~생성된 validation 조회~~
 
-미지원
+현재 미지원
 
 ```
 - uri
 [GET] http://localhost:12000/db/v1/mongodb/validation/{db name}/{collection}
 ```
+
+
 
 ### index 추가
 
@@ -161,6 +255,8 @@ MongoDB 에 사용될 `DB 및 Collection을 생성` 합니다.
 }
 ```
 
+
+
 ### 생성된 index 조회
 
 ```
@@ -168,23 +264,9 @@ MongoDB 에 사용될 `DB 및 Collection을 생성` 합니다.
 [GET] http://localhost:12000/db/v1/mongodb/index/{db name}/{collection}
 ```
 
+
+
 ### 기초 데이터 추가
-
-기초 데이터 추가
-- account => common_account
-- user => admin@bcloud.co.kr (super admin)
-
-```
-- uri
-[POST] http://localhost:12000/db/v1/mongodb/init-data/{dbname}
-
-- data
-{
-  "tntId": <object Id hex string>
-}
-```
-
-### 기초 데이터 추가 - custom
 
 해당 collection 에 custom 기초 데이터 추가
 - 필수값
@@ -199,6 +281,8 @@ MongoDB 에 사용될 `DB 및 Collection을 생성` 합니다.
   "data": <Object>  // name 필수
 }
 ```
+
+
 
 ### 기초 데이터 조회
 
