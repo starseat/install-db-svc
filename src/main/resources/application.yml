@@ -1,0 +1,20 @@
+app:
+  version: ${project.version}
+  name: ${project.name}
+
+server:
+  port: 12000
+  error:
+    include-message: ALWAYS
+    include-binding-errors: ALWAYS
+    include-stacktrace: NEVER
+    include-exception: false
+    path: /error
+    whitelabel:
+      enabled: false
+
+spring:
+  application:
+    name: install-db-svc
+  mvc:
+    throw-exception-if-no-handler-found: true

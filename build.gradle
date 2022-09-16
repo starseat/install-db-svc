@@ -1,0 +1,106 @@
+buildscript {
+    ext {
+        imageRegistryIp = "100.100.103.167"
+        repoGroup = "web-dev"
+        repoUsername = "admin"
+        repoPassword = "wlwndgo"
+        servicePort = "12000"
+        serviceProfile = "dev"
+
+        springBootVersion = '2.7.2'
+        jibVersion = '3.2.1'
+    }
+    repositories {
+        mavenCentral()
+        maven {
+            // jib 사용시 필요
+          url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath("io.spring.gradle:dependency-management-plugin:1.0.11.RELEASE")
+        classpath("gradle.plugin.com.google.cloud.tools:jib-gradle-plugin:${jibVersion}")
+    }
+}
+
+plugins {
+	id 'com.google.cloud.tools.jib' version '3.2.1'
+	id 'org.springframework.boot' version '2.7.2'
+	id 'io.spring.dependency-management' version '1.0.12.RELEASE'
+	id 'java'
+}
+
+group = 'ipron.cloud.db'
+version = '0.0.1'
+sourceCompatibility = '11'
+
+// gradle의 프로퍼티값들을 자바 리소스로 가져오기 전에 clean을 해줘서 강제 update 하기 위함.
+compileJava{
+	dependsOn clean
+}
+
+jib {
+	// private repository 사용 하기 위한 설정
+	allowInsecureRegistries = true
+	from {
+		image = "adoptopenjdk:16-jre"
+	}
+	to {
+		image = "${imageRegistryIp}/${repoGroup}/${project.name}"
+		auth {
+			username = "${repoUsername}".toString()
+			password = "${repoPassword}".toString()
+		}
+		tags = [
+				"${(rootProject.version!='unspecified' && rootProject.version!=null && rootProject.version!='') ? rootProject.version : getVersion()}",
+				"${new Date().format("yyyyMMddHHmmss")}"
+		]
+		container {
+			//컨테이너의 환경변수
+			environment = [
+					"JAVA_TOOL_OPTIONS": "-Xmx2048m -Dserver.port=${servicePort}".toString(),
+					"SPRING_PROFILES_ACTIVE": "${serviceProfile}".toString()
+			]
+		}
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	// mongodb
+	implementation 'org.mongodb:mongo-java-driver:3.12.11'
+
+	// MapUtils
+	implementation "org.apache.commons:commons-collections4:4.0"
+
+	// ModelMapper
+	implementation 'org.modelmapper:modelmapper:3.1.0'
+
+	// json
+	implementation 'com.google.code.gson:gson:2.9.1'
+
+	// jib plugin
+	implementation 'com.google.cloud.tools:jib-maven-plugin:3.2.1'
+
+	compileOnly 'org.projectlombok:lombok'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
